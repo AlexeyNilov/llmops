@@ -2,7 +2,7 @@ import time
 from langchain_core.documents import Document
 from data.embedding import embed_docs, clean_up, get_vector_store, clean_html
 from data.sql_json import init_db, fetch_all
-from data.sum import summarize_text
+from data.issue import summarize_issue
 from conf.settings import RAW_SQL_DB_PATH
 
 
@@ -20,11 +20,7 @@ docs = list()
 c = 0
 text_sum_len = 0
 for _, _, item in fetch_all(raw_conn):
-    text = item["fields"]["summary"] + "\n" + str(item["fields"]["description"])
-    text = text[:500]
-    text = summarize_text(text)
-    text = text[:256]
-    text = clean_html(text)
+    text = summarize_issue(item["key"])
     print(item["key"], text)
     text_sum_len += len(text)
     docs.append(Document(page_content=text, metadata={"jira_key": item["key"]}))

@@ -1,14 +1,9 @@
-from data.embedding import similarity_search, get_vector_store, clean_html
-from data.sql_json import fetch, init_db
-from conf.settings import RAW_SQL_DB_PATH, NEEDLE, CORRECT_ISSUES
+from data.embedding import similarity_search, get_vector_store
+from data.issue import summarize_issue
+from conf.settings import NEEDLE, CORRECT_ISSUES
 
 
-raw_conn = init_db(RAW_SQL_DB_PATH)
-
-data = fetch(raw_conn, NEEDLE)
-text = data["fields"]["summary"]
-text = clean_html(text)
-
+text = summarize_issue(NEEDLE)
 vs = get_vector_store()
 docs = similarity_search(vs=vs, query=text, k=10)
 
