@@ -42,7 +42,6 @@ print("Docs extracted", stage - init)
 print(f"Docs count: {len(docs)}")
 
 embed_docs(docs)
-# embed_docs(docs[2000:3000])
 
 end = time.time()
 print("Embedding completed", end - stage)

@@ -3,10 +3,8 @@ from langchain_core.prompts import PromptTemplate
 
 
 # Define model
-# MODEL_NAME = "deepseek-r1:1.5b"
-# MODEL_NAME = "gemma3:1b"
 MODEL_NAME = "gemma3:270m"
-llm = OllamaLLM(model=MODEL_NAME, top_p=0.5, temperature=0.2, top_k=10, keep_alive=3600)
+llm = OllamaLLM(model=MODEL_NAME, temperature=0.2, top_k=10, top_p=0.5, keep_alive=3600)
 
 # Define summarization prompt
 prompt = PromptTemplate(

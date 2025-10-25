@@ -24,6 +24,4 @@ for doc in docs:
     if issues_key in CORRECT_ISSUES:
         score += 1
 
-# print(similar_issues)
-# print(f"Needle found: {needle in similar_issues.keys()}")
 print(f"Score: {score}")
