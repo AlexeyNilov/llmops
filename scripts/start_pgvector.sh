@@ -1,4 +1,4 @@
-docker run \
+sudo docker run \
     --name pgvector-container \
     -e POSTGRES_USER=langchain \
     -e POSTGRES_PASSWORD=langchain \
