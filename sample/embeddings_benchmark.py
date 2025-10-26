@@ -13,13 +13,12 @@ similar_issues = dict()
 score = 0
 for doc in docs:
     issues_key = doc.metadata["jira_key"]
-    if issues_key not in similar_issues:
-        similar_issues[issues_key] = 1
-    else:
-        similar_issues[issues_key] += 1
+    similar_issues[issues_key] = get_title(issues_key)
 
     if issues_key in CORRECT_ISSUES:
         score += 1
 
-print(f"Score: {score}")
+
+print(similar_issues.keys())
 print(f"Similar issues found: {len(similar_issues)}")
+print(f"Score: {score}, expected {len(CORRECT_ISSUES)}")
