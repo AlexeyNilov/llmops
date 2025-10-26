@@ -22,7 +22,7 @@ def summarize_issue(jira_key: str, limit: int = TEXT_LIMIT) -> str:
         )  # We hope that beginnings and endings have the most important info
 
     text = summarize_text(text)
-    text = text[256]  # Truncate to avoid overly long summaries
+    text = text[:256]  # Truncate to avoid overly long summaries
     return text
 
 
