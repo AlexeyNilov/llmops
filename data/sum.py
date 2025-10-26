@@ -9,7 +9,7 @@ llm = OllamaLLM(model=MODEL_NAME, temperature=0.2, top_k=10, top_p=0.5, keep_ali
 # Define summarization prompt
 prompt = PromptTemplate(
     input_variables=["text"],
-    template="""You are an expert QA engineer. Summarize in one short sentence, including key details.
+    template="""Summarize in one short sentence, including key details (error, exception).
 ===
 {text}
 """,
