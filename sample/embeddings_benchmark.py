@@ -1,9 +1,10 @@
 from data.embedding import similarity_search, get_vector_store
-from data.issue import summarize_issue, get_title
+from data.issue import summarize_issue, get_title, fetch_issue_text
 from conf.settings import NEEDLE, CORRECT_ISSUES
 
-
-text = get_title(NEEDLE) + "\n" + summarize_issue(NEEDLE)
+text = fetch_issue_text(NEEDLE)
+summary = summarize_issue(text)
+text = get_title(NEEDLE) + "\n" + summary
 
 vs = get_vector_store()
 docs = similarity_search(vs=vs, query=text, k=10)

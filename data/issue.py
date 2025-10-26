@@ -1,5 +1,6 @@
 from data.sql_json import fetch, init_db
 from data.sum import summarize_text
+from lib.timeout import with_timeout
 from conf.settings import RAW_SQL_DB_PATH
 
 
@@ -13,8 +14,8 @@ def fetch_issue_text(jira_key: str) -> str:
     return text
 
 
-def summarize_issue(jira_key: str, limit: int = TEXT_LIMIT) -> str:
-    text = fetch_issue_text(jira_key)
+@with_timeout(timeout=2.0)
+def summarize_issue(text: str, limit: int = TEXT_LIMIT) -> str:
     middle = limit // 2
     if len(text) > limit:
         text = (
