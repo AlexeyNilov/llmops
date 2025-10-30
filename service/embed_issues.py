@@ -21,7 +21,7 @@ c = 0
 text_sum_len = 0
 for _, _, item in fetch_all(raw_conn):
     jira_key = item["key"]
-    print(f"Processing: {jira_key}")
+    # print(f"Processing: {jira_key}")
     text = fetch_issue_text(jira_key)
 
     try:
@@ -33,7 +33,7 @@ for _, _, item in fetch_all(raw_conn):
     text = get_title(jira_key) + "\n" + summary
     text = text.strip()
 
-    print(f"Summary for {jira_key}: {text}")
+    # print(f"Summary for {jira_key}: {text}")
     text_sum_len += len(text)
     docs.append(Document(page_content=text, metadata={"jira_key": jira_key}))
     c += 1

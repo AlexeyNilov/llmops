@@ -26,5 +26,8 @@ RUN pip install --break-system-packages --no-cache-dir -r requirements.txt
 
 COPY app .
 
+ENV OLLAMA_KEEP_ALIVE -1
+ENV OLLAMA_NUM_PARALLEL 4
+
 # Start Ollama
 CMD ["bash", "-c", "ollama serve & uvicorn main:app --host 0.0.0.0 --port 8080"]

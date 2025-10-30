@@ -1,5 +1,5 @@
 from data.sql_json import fetch, init_db
-from data.sum import summarize_text
+from data.sum import summarize_text, fast_summarize
 from lib.timeout import with_timeout
 from conf.settings import RAW_SQL_DB_PATH
 
@@ -23,6 +23,7 @@ def summarize_issue(text: str, limit: int = TEXT_LIMIT) -> str:
         )  # We hope that beginnings and endings have the most important info
 
     text = summarize_text(text)
+    # text = fast_summarize(text)
     text = text[:256]  # Truncate to avoid overly long summaries
     return text
 
