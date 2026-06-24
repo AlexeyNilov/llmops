@@ -1,6 +1,9 @@
-langchain
-langchain-community
-langchain-ollama
-langchain-postgres
-langchain-text-splitters
-ollama
+fastapi[standard]
+openai
+uvicorn
+streamlit
+loguru
+beautifulsoup4
+httpx
+aiofiles
+qdrant-client

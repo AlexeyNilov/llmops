@@ -1,7 +1,5 @@
 pytest
 pytest-asyncio
 pytest-mock
-pre-commit
 mypy
-flake8
-black
+ruff
