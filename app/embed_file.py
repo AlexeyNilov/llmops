@@ -6,17 +6,15 @@ from service import vector_service
 
 async def embed_file(
     filepath: str,
-    chunk_size: int,
     collection_name: str,
     collection_size: int | None,
     append: bool,
     reset_collection: bool,
 ) -> None:
     await vector_service.store_file_content_in_db(
-        filepath,
-        chunk_size,
-        collection_name,
-        collection_size,
+        filepath=filepath,
+        collection_name=collection_name,
+        collection_size=collection_size,
         append=append,
         reset_collection=reset_collection,
     )
@@ -31,7 +29,6 @@ def parse_args() -> argparse.Namespace:
         description="Index a text file with LlamaIndex embeddings and Qdrant."
     )
     parser.add_argument("filepath")
-    parser.add_argument("--chunk-size", type=int, default=256)
     parser.add_argument("--collection-name", default="knowledgebase")
     parser.add_argument(
         "--collection-size",
@@ -63,7 +60,6 @@ if __name__ == "__main__":
     asyncio.run(
         embed_file(
             args.filepath,
-            args.chunk_size,
             args.collection_name,
             args.collection_size,
             args.append,

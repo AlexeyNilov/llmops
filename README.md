@@ -37,6 +37,9 @@ Index a file:
 python app/embed_file.py path/to/file.txt --collection-name knowledgebase
 ```
 
+File processing uses LlamaIndex `Document` plus `SentenceSplitter` with the
+splitter's default chunking settings.
+
 By default, re-indexing a file replaces existing chunks for the same source
 filename. Use `--append` to keep existing chunks, or `--reset-collection` to
 delete and rebuild the whole collection.

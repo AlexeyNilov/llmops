@@ -2,10 +2,10 @@ import os
 from uuid import NAMESPACE_URL, uuid5
 
 from loguru import logger
-from llama_index.core import VectorStoreIndex
-from llama_index.core.schema import TextNode
+from llama_index.core import Document, VectorStoreIndex
+from llama_index.core.node_parser import SentenceSplitter
 
-from embeddings import clean, load
+from embeddings import read_text
 from index import (
     DEFAULT_COLLECTION_NAME,
     RETRIEVAL_TOP_K,
@@ -21,7 +21,6 @@ class VectorService:
     async def store_file_content_in_db(
         self,
         filepath: str,
-        chunk_size: int = 512,
         collection_name: str = DEFAULT_COLLECTION_NAME,
         collection_size: int | None = None,
         append: bool = False,
@@ -36,21 +35,30 @@ class VectorService:
         logger.debug(f"Inserting {filepath} content into database")
         client = get_qdrant_client()
         source = os.path.basename(filepath)
-        nodes: list[TextNode] = []
+        text = await read_text(filepath)
 
-        async for chunk_index, chunk in async_enumerate(load(filepath, chunk_size)):
-            logger.debug(f"Inserting '{chunk[0:20]}...' into database")
-            nodes.append(
-                TextNode(
-                    text=clean(chunk),
-                    id_=str(uuid5(NAMESPACE_URL, f"{source}:{chunk_index}")),
-                    metadata={
-                        "source": source,
-                        "chunk_index": chunk_index,
-                        "original_text": chunk,
-                    },
+        if not text.strip():
+            logger.warning(f"No content found in {filepath}; nothing inserted")
+            return
+
+        splitter = SentenceSplitter(
+            id_func=lambda index, document: str(
+                uuid5(NAMESPACE_URL, f"{document.metadata['source']}:{index}")
+            ),
+        )
+        nodes = splitter.get_nodes_from_documents(
+            [
+                Document(
+                    text=text,
+                    metadata={"source": source},
+                    id_=source,
                 )
-            )
+            ]
+        )
+
+        for chunk_index, node in enumerate(nodes):
+            logger.debug(f"Inserting '{node.get_content()[0:20]}...' into database")
+            node.metadata["chunk_index"] = chunk_index
 
         if not nodes:
             logger.warning(f"No content found in {filepath}; nothing inserted")
@@ -69,13 +77,6 @@ class VectorService:
 
 
 vector_service = VectorService()
-
-
-async def async_enumerate(async_iterable, start: int = 0):
-    index = start
-    async for item in async_iterable:
-        yield index, item
-        index += 1
 
 
 async def get_rag_content(prompt: str) -> str:
