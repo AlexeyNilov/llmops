@@ -66,6 +66,10 @@ streamlit run src/llmops/ui/streamlit_chat.py
 The Streamlit client sends prompts to `http://localhost:8000/generate/text` and
 streams the response back into the chat.
 
+The FastAPI request path uses async retrieval against Qdrant and async
+chat-completion streaming. The CLI indexing path keeps separate sync Qdrant
+helpers for collection maintenance and batch indexing.
+
 ## App structure
 
 The application code is organized by responsibility:

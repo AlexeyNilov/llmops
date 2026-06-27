@@ -31,5 +31,11 @@ async def serve_language_model_controller(
     prompt: str, rag_content: str = Depends(get_rag_content)
 ) -> StreamingResponse:
     answer_prompt = build_answer_prompt(prompt, rag_content)
-    logger.info(answer_prompt)
+    logger.info(
+        {
+            "event": "generate_text",
+            "prompt_length": len(prompt),
+            "rag_content_length": len(rag_content),
+        }
+    )
     return StreamingResponse(stream_text(answer_prompt), media_type="text/plain")

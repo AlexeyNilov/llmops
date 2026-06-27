@@ -53,6 +53,31 @@ def test_delete_source_documents_deletes_only_matching_source_when_collection_ex
     assert condition.match.value == "guide.txt"
 
 
+def test_get_async_vector_store_uses_async_qdrant_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    class FakeAsyncQdrantClient:
+        def __init__(self, url: str) -> None:
+            captured["client_url"] = url
+
+    class FakeQdrantVectorStore:
+        def __init__(self, **kwargs: Any) -> None:
+            captured.update(kwargs)
+
+    monkeypatch.setattr(qdrant_store, "QDRANT_URL", "http://qdrant.test")
+    monkeypatch.setattr(qdrant_store, "AsyncQdrantClient", FakeAsyncQdrantClient)
+    monkeypatch.setattr(qdrant_store, "QdrantVectorStore", FakeQdrantVectorStore)
+
+    qdrant_store.get_async_vector_store("knowledgebase")
+
+    assert captured["client_url"] == "http://qdrant.test"
+    assert captured["collection_name"] == "knowledgebase"
+    assert isinstance(captured["aclient"], FakeAsyncQdrantClient)
+    assert "client" not in captured
+
+
 @pytest.mark.asyncio
 async def test_store_file_content_skips_blank_files_without_touching_vector_store(
     tmp_path,
@@ -150,13 +175,16 @@ async def test_index_file_uses_expected_retention_policy(
 
 
 @pytest.mark.asyncio
-async def test_get_rag_content_joins_retrieved_node_text_with_configured_top_k(
+async def test_get_rag_content_awaits_async_retrieval_and_joins_node_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict[str, Any] = {}
 
     class FakeRetriever:
-        def retrieve(self, prompt: str) -> list[Any]:
+        def retrieve(self, _prompt: str) -> list[Any]:
+            raise AssertionError("get_rag_content must not call sync retrieve")
+
+        async def aretrieve(self, prompt: str) -> list[Any]:
             captured["prompt"] = prompt
             return [
                 SimpleNamespace(node=SimpleNamespace(get_content=lambda: "first chunk")),
@@ -168,7 +196,7 @@ async def test_get_rag_content_joins_retrieved_node_text_with_configured_top_k(
             captured["similarity_top_k"] = similarity_top_k
             return FakeRetriever()
 
-    monkeypatch.setattr(answer_question, "get_index", lambda collection_name: FakeIndex())
+    monkeypatch.setattr(answer_question, "get_async_index", lambda collection_name: FakeIndex())
     monkeypatch.setattr(answer_question, "RETRIEVAL_TOP_K", 2)
 
     content = await answer_question.get_rag_content("Where is the sentinel?")
@@ -214,6 +242,7 @@ async def test_generate_text_controller_combines_prompt_with_rag_content_and_str
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured_prompts: list[str] = []
+    log_messages: list[Any] = []
 
     async def fake_stream_text(prompt: str):
         captured_prompts.append(prompt)
@@ -221,6 +250,7 @@ async def test_generate_text_controller_combines_prompt_with_rag_content_and_str
         yield " text"
 
     monkeypatch.setattr(main, "stream_text", fake_stream_text)
+    monkeypatch.setattr(main.logger, "info", lambda message: log_messages.append(message))
 
     response = await main.serve_language_model_controller(
         prompt="What is stored?",
@@ -233,6 +263,8 @@ async def test_generate_text_controller_combines_prompt_with_rag_content_and_str
     assert captured_prompts == [
         "Answer this question: 'What is stored?' based on this content: retrieved content"
     ]
+    assert "retrieved content" not in str(log_messages)
+    assert "Answer this question" not in str(log_messages)
 
 
 def test_embed_file_cli_rejects_append_and_reset_collection_together(

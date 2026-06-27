@@ -1,2 +1,1 @@
-async
 graph/graphrag - https://developers.llamaindex.ai/python/framework/module_guides/indexing/lpg_index_guide
