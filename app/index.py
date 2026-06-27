@@ -158,8 +158,7 @@ def collection_exists(client: QdrantClient, collection_name: str) -> bool:
     except AttributeError:
         response = client.get_collections()
         return any(
-            collection.name == collection_name
-            for collection in response.collections
+            collection.name == collection_name for collection in response.collections
         )
 
 

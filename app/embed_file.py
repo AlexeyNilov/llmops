@@ -16,10 +16,7 @@ async def embed_file(
         append=append,
         reset_collection=reset_collection,
     )
-    print(
-        f"Stored embeddings for {filepath!r} in collection "
-        f"{collection_name!r}"
-    )
+    print(f"Stored embeddings for {filepath!r} in collection {collection_name!r}")
 
 
 def parse_args() -> argparse.Namespace:

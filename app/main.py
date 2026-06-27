@@ -30,6 +30,8 @@ async def monitor_service(
 async def serve_language_model_controller(
     prompt: str, rag_content: str = Depends(get_rag_content)
 ) -> StreamingResponse:
-    prompt = "Answer this question: '" + prompt + "' based on this content: " + rag_content
+    prompt = (
+        "Answer this question: '" + prompt + "' based on this content: " + rag_content
+    )
     logger.info(prompt)
     return StreamingResponse(stream_text(prompt), media_type="text/plain")

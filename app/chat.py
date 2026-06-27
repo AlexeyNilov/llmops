@@ -19,7 +19,7 @@ if prompt := st.chat_input("Write your prompt in this input field"):
         st.text(prompt)
 
     response = requests.get(
-        f"http://localhost:8000/generate/text", params={"prompt": prompt}, stream=True
+        "http://localhost:8000/generate/text", params={"prompt": prompt}, stream=True
     )
     response.raise_for_status()
     assistant_response = ""

@@ -25,5 +25,5 @@ mypy:
 	$(MYPY) src tests
 
 format:
-	$(RUFF) format --check .
-	$(RUFF) fix .
+	$(RUFF) check --fix .
+	$(RUFF) format .
