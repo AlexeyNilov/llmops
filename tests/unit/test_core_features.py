@@ -96,6 +96,37 @@ def test_parse_llm_triplets_accepts_markdown_wrapped_triplets() -> None:
     ]
 
 
+def test_lmstudio_llm_disables_thinking_with_chat_template_kwargs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    class FakeCompletions:
+        def create(self, **kwargs: Any) -> Any:
+            captured.update(kwargs)
+            message = SimpleNamespace(content="(Combat, is divided into, rounds)")
+            return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            captured["client"] = kwargs
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setattr(cognitive_map_use_case, "OpenAI", FakeOpenAI)
+
+    llm = cognitive_map_use_case.LMStudioLLM(
+        model="gemma-4-12b",
+        api_base="http://llm.test/v1",
+        api_key="test-key",
+        disable_thinking=True,
+    )
+
+    response = llm.complete("Extract triples")
+
+    assert response.text == "(Combat, is divided into, rounds)"
+    assert captured["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
+
+
 def test_graph_transformations_split_markdown_sections_into_small_chunks() -> None:
     transformations = cognitive_map_use_case.build_graph_transformations(
         chunk_size=80,
@@ -104,6 +135,7 @@ def test_graph_transformations_split_markdown_sections_into_small_chunks() -> No
 
     assert len(transformations) == 2
     assert transformations[0].__class__.__name__ == "MarkdownNodeParser"
+    assert transformations[0].include_metadata is False
     assert transformations[1].__class__.__name__ == "SentenceSplitter"
     assert transformations[1].chunk_size == 80
     assert transformations[1].chunk_overlap == 10

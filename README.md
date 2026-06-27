@@ -27,8 +27,9 @@ export LLAMAINDEX_EMBEDDING_MODEL=v5-small-retrieval-Q8_0.gguf
 export RAG_RETRIEVAL_TOP_K=2
 export LLMOPS_GRAPH_LLM_MODEL=gemma-4-12b
 export LLMOPS_GRAPH_PERSIST_DIR=.local/property_graph
-export LLMOPS_GRAPH_CHUNK_SIZE=100
-export LLMOPS_GRAPH_CHUNK_OVERLAP=10
+export LLMOPS_GRAPH_CHUNK_SIZE=1200
+export LLMOPS_GRAPH_CHUNK_OVERLAP=200
+export LLMOPS_GRAPH_DISABLE_THINKING=true
 ```
 
 The default `llamafile` provider uses this app's LlamaIndex-compatible adapter
@@ -69,10 +70,11 @@ endpoint configured by `LM_STUDIO_CHAT_BASE_URL`, defaulting to
 `doc/cognitive_maps/<input-stem>.md` and persists the local graph under
 `LLMOPS_GRAPH_PERSIST_DIR`.
 
-Markdown inputs are split with LlamaIndex `MarkdownNodeParser` first, then
-split into small sentence chunks before graph extraction. The small default
-`LLMOPS_GRAPH_CHUNK_SIZE` is intentional for local chat models that may return
-empty graph-extraction responses for larger Markdown sections.
+Markdown inputs are split with LlamaIndex `MarkdownNodeParser` first, then split
+into sentence chunks before graph extraction. For Gemma models served by
+llama.cpp, `LLMOPS_GRAPH_DISABLE_THINKING=true` sends
+`chat_template_kwargs.enable_thinking=false` so structured triples are returned
+in `message.content` instead of the reasoning channel.
 
 Run the FastAPI app:
 

@@ -15,6 +15,7 @@ from openai import OpenAI
 from llmops.config import (
     GRAPH_CHUNK_OVERLAP,
     GRAPH_CHUNK_SIZE,
+    GRAPH_DISABLE_THINKING,
     GRAPH_LLM_MODEL,
     GRAPH_MAX_PATHS_PER_CHUNK,
     GRAPH_PERSIST_DIR,
@@ -37,6 +38,7 @@ class LMStudioLLM(CustomLLM):
     max_tokens: int = 768
     timeout: float = 120
     context_window: int = 8192
+    disable_thinking: bool = False
 
     @property
     def metadata(self) -> LLMMetadata:
@@ -63,6 +65,7 @@ class LMStudioLLM(CustomLLM):
             messages=[{"role": "user", "content": prompt}],
             temperature=self.temperature,
             max_tokens=self.max_tokens,
+            extra_body=_thinking_extra_body(self.disable_thinking),
         )
         content = response.choices[0].message.content or ""
         return CompletionResponse(text=content)
@@ -171,7 +174,7 @@ def build_graph_transformations(
     if chunk_overlap >= chunk_size:
         raise ValueError("chunk_overlap must be smaller than chunk_size")
     return [
-        MarkdownNodeParser.from_defaults(),
+        MarkdownNodeParser.from_defaults(include_metadata=False),
         SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap),
     ]
 
@@ -184,7 +187,14 @@ def _get_graph_llm() -> LMStudioLLM:
         temperature=0.0,
         max_tokens=768,
         timeout=120,
+        disable_thinking=GRAPH_DISABLE_THINKING,
     )
+
+
+def _thinking_extra_body(disable_thinking: bool) -> dict[str, object] | None:
+    if not disable_thinking:
+        return None
+    return {"chat_template_kwargs": {"enable_thinking": False}}
 
 
 def _persist_graph(graph_store: SimplePropertyGraphStore, persist_dir: Path) -> None:

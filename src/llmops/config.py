@@ -1,5 +1,7 @@
 import os
 
+TRUE_VALUES = {"1", "true", "yes", "on"}
+
 DEFAULT_QDRANT_URL = "http://localhost:6333"
 DEFAULT_EMBEDDINGS_BASE_URL = "http://127.0.0.1:12346"
 DEFAULT_EMBEDDING_MODEL = "v5-small-retrieval-Q8_0.gguf"
@@ -21,5 +23,6 @@ CHAT_MODEL = os.getenv("LM_STUDIO_CHAT_MODEL", "gemma-4-12b")
 GRAPH_PERSIST_DIR = os.getenv("LLMOPS_GRAPH_PERSIST_DIR", ".local/property_graph")
 GRAPH_LLM_MODEL = os.getenv("LLMOPS_GRAPH_LLM_MODEL", "gemma-4-12b")
 GRAPH_MAX_PATHS_PER_CHUNK = int(os.getenv("LLMOPS_GRAPH_MAX_PATHS_PER_CHUNK", "8"))
-GRAPH_CHUNK_SIZE = int(os.getenv("LLMOPS_GRAPH_CHUNK_SIZE", "100"))
-GRAPH_CHUNK_OVERLAP = int(os.getenv("LLMOPS_GRAPH_CHUNK_OVERLAP", "10"))
+GRAPH_CHUNK_SIZE = int(os.getenv("LLMOPS_GRAPH_CHUNK_SIZE", "1200"))
+GRAPH_CHUNK_OVERLAP = int(os.getenv("LLMOPS_GRAPH_CHUNK_OVERLAP", "200"))
+GRAPH_DISABLE_THINKING = os.getenv("LLMOPS_GRAPH_DISABLE_THINKING", "true").lower() in TRUE_VALUES
