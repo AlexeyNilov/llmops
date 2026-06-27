@@ -1,2 +1,3 @@
 Codex + RAG
-graph/graphrag - https://developers.llamaindex.ai/python/framework/module_guides/indexing/lpg_index_guide
+Rag all files in the given folder
+Use https://js.cytoscape.org/?

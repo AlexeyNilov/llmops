@@ -5,11 +5,13 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from llama_index.core.graph_stores.types import EntityNode, Relation
 
 from llmops.api import main
-from llmops.cli import index_file
+from llmops.cli import cognitive_map, index_file
 from llmops.infrastructure import embeddings, language_model, qdrant_store
 from llmops.use_cases import answer_question
+from llmops.use_cases import cognitive_map as cognitive_map_use_case
 from llmops.use_cases import index_file as index_file_use_case
 
 
@@ -76,6 +78,59 @@ def test_get_async_vector_store_uses_async_qdrant_client(
     assert captured["collection_name"] == "knowledgebase"
     assert isinstance(captured["aclient"], FakeAsyncQdrantClient)
     assert "client" not in captured
+
+
+def test_parse_llm_triplets_accepts_markdown_wrapped_triplets() -> None:
+    output = """
+    Based on the text:
+    **(IA, is, cognitive infrastructure)**
+    (IA artifact, improves, reasoning under constraints)
+    not a triplet
+    """
+
+    triplets = cognitive_map_use_case.parse_llm_triplets(output)
+
+    assert triplets == [
+        ("IA", "is", "cognitive infrastructure"),
+        ("IA artifact", "improves", "reasoning under constraints"),
+    ]
+
+
+def test_render_mermaid_concept_map_uses_graph_relations() -> None:
+    graph = cognitive_map_use_case.SimplePropertyGraphStore()
+    ia = EntityNode(name="IA", label="concept")
+    reasoning = EntityNode(
+        name="Reasoning under constraints",
+        label="concept",
+    )
+    graph.upsert_nodes([ia, reasoning])
+    graph.upsert_relations(
+        [
+            Relation(
+                label="IMPROVES",
+                source_id=ia.id,
+                target_id=reasoning.id,
+            )
+        ]
+    )
+
+    rendered = cognitive_map_use_case.render_mermaid_concept_map(
+        graph,
+        title="IA cognitive map",
+    )
+
+    assert "# IA cognitive map" in rendered
+    assert 'N0["IA"]' in rendered
+    assert 'N1["Reasoning under constraints"]' in rendered
+    assert 'N0 -- "IMPROVES" --> N1' in rendered
+
+
+def test_load_markdown_document_rejects_blank_notes(tmp_path) -> None:
+    filepath = tmp_path / "blank.md"
+    filepath.write_text("\n\t", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="No content found"):
+        cognitive_map_use_case.load_markdown_document(filepath)
 
 
 @pytest.mark.asyncio
@@ -280,6 +335,19 @@ def test_embed_file_cli_rejects_append_and_reset_collection_together(
         index_file.parse_args()
 
     assert exc_info.value.code == 2
+
+
+def test_cognitive_map_cli_defaults_to_markdown_output(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["cognitive_map.py", "input/note.md"],
+    )
+
+    args = cognitive_map.parse_args()
+
+    assert args.filepath == "input/note.md"
+    assert args.output_path == "doc/cognitive_maps/note.md"
 
 
 def test_index_file_script_can_run_directly_without_pythonpath() -> None:

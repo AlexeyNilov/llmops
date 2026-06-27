@@ -17,3 +17,8 @@ RETRIEVAL_TOP_K = int(os.getenv("RAG_RETRIEVAL_TOP_K", "2"))
 LM_STUDIO_CHAT_BASE_URL = os.getenv("LM_STUDIO_CHAT_BASE_URL", "http://127.0.0.1:12345/v1")
 LM_STUDIO_API_KEY = os.getenv("LM_STUDIO_API_KEY", "key")
 CHAT_MODEL = os.getenv("LM_STUDIO_CHAT_MODEL", "gemma-4-12b")
+
+GRAPH_PERSIST_DIR = os.getenv("LLMOPS_GRAPH_PERSIST_DIR", ".local/property_graph")
+GRAPH_LLM_MODEL = os.getenv("LLMOPS_GRAPH_LLM_MODEL", "gemma-4-12b")
+GRAPH_MAX_PATHS_PER_CHUNK = int(os.getenv("LLMOPS_GRAPH_MAX_PATHS_PER_CHUNK", "8"))
+GRAPH_CHUNK_SIZE = int(os.getenv("LLMOPS_GRAPH_CHUNK_SIZE", "1200"))

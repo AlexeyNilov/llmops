@@ -25,6 +25,8 @@ export LLAMAINDEX_EMBEDDINGS_BASE_URL=http://127.0.0.1:12346
 export LLAMAINDEX_EMBEDDING_PROVIDER=llamafile
 export LLAMAINDEX_EMBEDDING_MODEL=v5-small-retrieval-Q8_0.gguf
 export RAG_RETRIEVAL_TOP_K=2
+export LLMOPS_GRAPH_LLM_MODEL=gemma-4-12b
+export LLMOPS_GRAPH_PERSIST_DIR=.local/property_graph
 ```
 
 The default `llamafile` provider uses this app's LlamaIndex-compatible adapter
@@ -50,6 +52,20 @@ splitter's default chunking settings.
 By default, re-indexing a file replaces existing chunks for the same source
 filename. Use `--append` to keep existing chunks, or `--reset-collection` to
 delete and rebuild the whole collection.
+
+Build a cognitive map from a Markdown note:
+
+```bash
+PYTHONPATH=src python -m llmops.cli.cognitive_map input/2026-05-04-ia-as-cognitive-infrastructure.md
+```
+
+The cognitive-map CLI uses LlamaIndex `PropertyGraphIndex` with a local
+`SimplePropertyGraphStore`. It calls the LM Studio OpenAI-compatible chat
+endpoint configured by `LM_STUDIO_CHAT_BASE_URL`, defaulting to
+`http://127.0.0.1:12345/v1`, and uses `LLMOPS_GRAPH_LLM_MODEL`, defaulting to
+`gemma-4-12b`. The command writes a Mermaid Markdown map to
+`doc/cognitive_maps/<input-stem>.md` and persists the local graph under
+`LLMOPS_GRAPH_PERSIST_DIR`.
 
 Run the FastAPI app:
 
