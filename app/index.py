@@ -5,7 +5,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
 DEFAULT_QDRANT_URL = "http://localhost:6333"
-DEFAULT_EMBEDDINGS_BASE_URL = "http://127.0.0.1:12345"
+DEFAULT_EMBEDDINGS_BASE_URL = "http://127.0.0.1:12346"
 
 DEFAULT_COLLECTION_NAME = os.getenv(
     "QDRANT_COLLECTION_NAME",

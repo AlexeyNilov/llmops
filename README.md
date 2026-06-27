@@ -13,14 +13,14 @@ pip install -r requirements.txt
 
 Start Qdrant on `http://localhost:6333`, then start a llama.cpp-compatible
 embedding server. By default the app expects the embedding endpoint at
-`http://127.0.0.1:12345`.
+`http://127.0.0.1:12346`.
 
 Useful environment variables:
 
 ```bash
 export QDRANT_URL=http://localhost:6333
 export QDRANT_COLLECTION_NAME=knowledgebase
-export LLAMAINDEX_EMBEDDINGS_BASE_URL=http://127.0.0.1:12345
+export LLAMAINDEX_EMBEDDINGS_BASE_URL=http://127.0.0.1:12346
 export LLAMAINDEX_EMBEDDING_PROVIDER=llamafile
 export RAG_RETRIEVAL_TOP_K=2
 ```
