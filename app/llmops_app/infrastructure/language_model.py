@@ -1,8 +1,7 @@
 from collections.abc import AsyncIterator
 
-from lmstudio import chat_client
-
-CHAT_MODEL = "gemma-4-12b"
+from llmops_app.config import CHAT_MODEL
+from llmops_app.infrastructure.chat_client import chat_client
 
 
 async def stream_text(prompt: str) -> AsyncIterator[str]:

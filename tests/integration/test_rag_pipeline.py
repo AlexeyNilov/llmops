@@ -1,7 +1,9 @@
 import os
 
 import pytest
-import service
+from llmops_app.config import DEFAULT_COLLECTION_NAME
+from llmops_app.use_cases.answer_question import get_rag_content
+from llmops_app.use_cases.index_file import FileIndexer
 
 pytestmark = pytest.mark.integration
 
@@ -17,12 +19,12 @@ async def test_index_then_retrieve_returns_content_from_uploaded_file(tmp_path) 
         encoding="utf-8",
     )
 
-    await service.VectorService().store_file_content_in_db(
+    await FileIndexer().index_file(
         str(filepath),
-        collection_name=service.DEFAULT_COLLECTION_NAME,
+        collection_name=DEFAULT_COLLECTION_NAME,
         reset_collection=True,
     )
 
-    content = await service.get_rag_content("What is the integration sentinel answer?")
+    content = await get_rag_content("What is the integration sentinel answer?")
 
     assert "qdrant-llamafile-ready" in content

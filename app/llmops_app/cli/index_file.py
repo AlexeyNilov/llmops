@@ -1,16 +1,17 @@
 import argparse
 import asyncio
 
-from service import vector_service
+from llmops_app.config import DEFAULT_COLLECTION_NAME
+from llmops_app.use_cases.index_file import file_indexer
 
 
-async def embed_file(
+async def index_file(
     filepath: str,
     collection_name: str,
     append: bool,
     reset_collection: bool,
 ) -> None:
-    await vector_service.store_file_content_in_db(
+    await file_indexer.index_file(
         filepath=filepath,
         collection_name=collection_name,
         append=append,
@@ -24,7 +25,7 @@ def parse_args() -> argparse.Namespace:
         description="Index a text file with LlamaIndex embeddings and Qdrant."
     )
     parser.add_argument("filepath")
-    parser.add_argument("--collection-name", default="knowledgebase")
+    parser.add_argument("--collection-name", default=DEFAULT_COLLECTION_NAME)
     parser.add_argument(
         "--append",
         action="store_true",
@@ -41,13 +42,17 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-if __name__ == "__main__":
+def main() -> None:
     args = parse_args()
     asyncio.run(
-        embed_file(
+        index_file(
             args.filepath,
             args.collection_name,
             args.append,
             args.reset_collection,
         )
     )
+
+
+if __name__ == "__main__":
+    main()

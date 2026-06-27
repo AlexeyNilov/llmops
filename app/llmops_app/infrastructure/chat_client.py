@@ -1,7 +1,6 @@
 from openai import AsyncOpenAI
 
-LM_STUDIO_CHAT_BASE_URL = "http://127.0.0.1:12345/v1"
-LM_STUDIO_API_KEY = "key"
+from llmops_app.config import LM_STUDIO_API_KEY, LM_STUDIO_CHAT_BASE_URL
 
 chat_client = AsyncOpenAI(
     api_key=LM_STUDIO_API_KEY,

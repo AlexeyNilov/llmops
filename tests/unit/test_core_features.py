@@ -2,18 +2,21 @@ import sys
 from types import SimpleNamespace
 from typing import Any
 
-import embed_file
-import index
-import main
-import models
 import pytest
-import service
+from llmops_app.api import main
+from llmops_app.cli import index_file
+from llmops_app.infrastructure import embeddings, language_model, qdrant_store
+from llmops_app.use_cases import answer_question
+from llmops_app.use_cases import index_file as index_file_use_case
 
 
 def test_embedding_adapter_orders_embeddings_by_response_index() -> None:
-    embed_model = index.LlamaCppServerEmbedding(base_url="http://embedding.test/", model="test")
+    embed_model = embeddings.LlamaCppServerEmbedding(
+        base_url="http://embedding.test/",
+        model="test",
+    )
 
-    embeddings = embed_model._parse_embeddings(
+    parsed_embeddings = embed_model._parse_embeddings(
         {
             "data": [
                 {"index": 1, "embedding": [0.2, 0.3]},
@@ -22,11 +25,11 @@ def test_embedding_adapter_orders_embeddings_by_response_index() -> None:
         }
     )
 
-    assert embeddings == [[0.0, 0.1], [0.2, 0.3]]
+    assert parsed_embeddings == [[0.0, 0.1], [0.2, 0.3]]
     assert embed_model.base_url == "http://embedding.test"
 
 
-def test_delete_by_source_deletes_only_matching_source_when_collection_exists(
+def test_delete_source_documents_deletes_only_matching_source_when_collection_exists(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client = SimpleNamespace(delete_calls=[])
@@ -35,9 +38,9 @@ def test_delete_by_source_deletes_only_matching_source_when_collection_exists(
         client.delete_calls.append(kwargs)
 
     client.delete = fake_delete
-    monkeypatch.setattr(index, "collection_exists", lambda _client, _collection_name: True)
+    monkeypatch.setattr(qdrant_store, "collection_exists", lambda _client, _collection_name: True)
 
-    index.delete_by_source(client, "knowledgebase", "guide.txt")
+    qdrant_store.delete_source_documents(client, "knowledgebase", "guide.txt")
 
     assert len(client.delete_calls) == 1
     delete_call = client.delete_calls[0]
@@ -56,16 +59,24 @@ async def test_store_file_content_skips_blank_files_without_touching_vector_stor
     filepath.write_text(" \n\t", encoding="utf-8")
     calls: list[str] = []
 
-    monkeypatch.setattr(service, "get_qdrant_client", lambda: object())
-    monkeypatch.setattr(service, "delete_by_source", lambda *_args: calls.append("delete"))
-    monkeypatch.setattr(service, "reset_qdrant_collection", lambda *_args: calls.append("reset"))
+    monkeypatch.setattr(index_file_use_case, "get_qdrant_client", lambda: object())
     monkeypatch.setattr(
-        service,
+        index_file_use_case,
+        "delete_source_documents",
+        lambda *_args: calls.append("delete"),
+    )
+    monkeypatch.setattr(
+        index_file_use_case,
+        "reset_qdrant_collection",
+        lambda *_args: calls.append("reset"),
+    )
+    monkeypatch.setattr(
+        index_file_use_case,
         "VectorStoreIndex",
         lambda *_args, **_kwargs: calls.append("index"),
     )
 
-    await service.VectorService().store_file_content_in_db(str(filepath))
+    await index_file_use_case.FileIndexer().index_file(str(filepath))
 
     assert calls == []
 
@@ -79,7 +90,7 @@ async def test_store_file_content_skips_blank_files_without_touching_vector_stor
     ],
 )
 @pytest.mark.asyncio
-async def test_store_file_content_uses_expected_retention_policy(
+async def test_index_file_uses_expected_retention_policy(
     tmp_path,
     monkeypatch: pytest.MonkeyPatch,
     append: bool,
@@ -109,15 +120,23 @@ async def test_store_file_content_uses_expected_retention_policy(
             calls.append("index")
             assert nodes[0].metadata["chunk_index"] == 0
 
-    monkeypatch.setattr(service, "SentenceSplitter", FakeSentenceSplitter)
-    monkeypatch.setattr(service, "get_qdrant_client", lambda: object())
-    monkeypatch.setattr(service, "get_storage_context", lambda *_args: object())
-    monkeypatch.setattr(service, "get_embed_model", lambda: object())
-    monkeypatch.setattr(service, "VectorStoreIndex", FakeVectorStoreIndex)
-    monkeypatch.setattr(service, "delete_by_source", lambda *_args: calls.append("delete"))
-    monkeypatch.setattr(service, "reset_qdrant_collection", lambda *_args: calls.append("reset"))
+    monkeypatch.setattr(index_file_use_case, "SentenceSplitter", FakeSentenceSplitter)
+    monkeypatch.setattr(index_file_use_case, "get_qdrant_client", lambda: object())
+    monkeypatch.setattr(index_file_use_case, "get_storage_context", lambda *_args: object())
+    monkeypatch.setattr(index_file_use_case, "get_embed_model", lambda: object())
+    monkeypatch.setattr(index_file_use_case, "VectorStoreIndex", FakeVectorStoreIndex)
+    monkeypatch.setattr(
+        index_file_use_case,
+        "delete_source_documents",
+        lambda *_args: calls.append("delete"),
+    )
+    monkeypatch.setattr(
+        index_file_use_case,
+        "reset_qdrant_collection",
+        lambda *_args: calls.append("reset"),
+    )
 
-    await service.VectorService().store_file_content_in_db(
+    await index_file_use_case.FileIndexer().index_file(
         str(filepath),
         collection_name="knowledgebase",
         append=append,
@@ -146,10 +165,10 @@ async def test_get_rag_content_joins_retrieved_node_text_with_configured_top_k(
             captured["similarity_top_k"] = similarity_top_k
             return FakeRetriever()
 
-    monkeypatch.setattr(index, "get_index", lambda collection_name: FakeIndex())
-    monkeypatch.setattr(service, "RETRIEVAL_TOP_K", 2)
+    monkeypatch.setattr(answer_question, "get_index", lambda collection_name: FakeIndex())
+    monkeypatch.setattr(answer_question, "RETRIEVAL_TOP_K", 2)
 
-    content = await service.get_rag_content("Where is the sentinel?")
+    content = await answer_question.get_rag_content("Where is the sentinel?")
 
     assert content == "first chunk\nsecond chunk"
     assert captured == {"similarity_top_k": 2, "prompt": "Where is the sentinel?"}
@@ -172,13 +191,13 @@ async def test_stream_text_sends_chat_prompt_and_yields_only_non_empty_chunks(
             return fake_stream()
 
     fake_client = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
-    monkeypatch.setattr(models, "chat_client", fake_client)
+    monkeypatch.setattr(language_model, "chat_client", fake_client)
 
-    chunks = [chunk async for chunk in models.stream_text("Explain this")]
+    chunks = [chunk async for chunk in language_model.stream_text("Explain this")]
 
     assert chunks == ["hello", " world"]
     assert captured == {
-        "model": models.CHAT_MODEL,
+        "model": language_model.CHAT_MODEL,
         "messages": [
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Explain this"},
@@ -223,6 +242,6 @@ def test_embed_file_cli_rejects_append_and_reset_collection_together(
     )
 
     with pytest.raises(SystemExit) as exc_info:
-        embed_file.parse_args()
+        index_file.parse_args()
 
     assert exc_info.value.code == 2

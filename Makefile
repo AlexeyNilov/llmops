@@ -46,7 +46,7 @@ start-fastapi:
 	@if [ -f $(APP_RUN_DIR)/fastapi.pid ] && kill -0 $$(cat $(APP_RUN_DIR)/fastapi.pid) 2>/dev/null; then \
 		echo "FastAPI is already running on http://$(FASTAPI_HOST):$(FASTAPI_PORT)"; \
 	else \
-		PYTHONPATH=app nohup $(UVICORN) main:app --reload --host $(FASTAPI_HOST) --port $(FASTAPI_PORT) > $(APP_RUN_DIR)/fastapi.log 2>&1 & \
+		PYTHONPATH=app nohup $(UVICORN) llmops_app.api.main:app --reload --host $(FASTAPI_HOST) --port $(FASTAPI_PORT) > $(APP_RUN_DIR)/fastapi.log 2>&1 & \
 		echo $$! > $(APP_RUN_DIR)/fastapi.pid; \
 		echo "FastAPI started on http://$(FASTAPI_HOST):$(FASTAPI_PORT)"; \
 	fi
@@ -67,7 +67,7 @@ start-streamlit:
 	@if [ -f $(APP_RUN_DIR)/streamlit.pid ] && kill -0 $$(cat $(APP_RUN_DIR)/streamlit.pid) 2>/dev/null; then \
 		echo "Streamlit is already running on http://$(STREAMLIT_HOST):$(STREAMLIT_PORT)"; \
 	else \
-		nohup $(STREAMLIT) run app/chat.py --server.address $(STREAMLIT_HOST) --server.port $(STREAMLIT_PORT) > $(APP_RUN_DIR)/streamlit.log 2>&1 & \
+		nohup $(STREAMLIT) run app/llmops_app/ui/streamlit_chat.py --server.address $(STREAMLIT_HOST) --server.port $(STREAMLIT_PORT) > $(APP_RUN_DIR)/streamlit.log 2>&1 & \
 		echo $$! > $(APP_RUN_DIR)/streamlit.pid; \
 		echo "Streamlit started on http://$(STREAMLIT_HOST):$(STREAMLIT_PORT)"; \
 	fi

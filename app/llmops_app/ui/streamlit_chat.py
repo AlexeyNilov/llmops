@@ -1,5 +1,3 @@
-# client.py
-
 import requests
 import streamlit as st
 
@@ -19,7 +17,10 @@ if prompt := st.chat_input("Write your prompt in this input field"):
         st.text(prompt)
 
     response = requests.get(
-        "http://localhost:8000/generate/text", params={"prompt": prompt}, stream=True
+        "http://localhost:8000/generate/text",
+        params={"prompt": prompt},
+        stream=True,
+        timeout=30,
     )
     response.raise_for_status()
     assistant_response = ""
