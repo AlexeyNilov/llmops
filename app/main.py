@@ -5,7 +5,8 @@ import time
 from uuid import uuid4
 from typing import Awaitable, Callable
 from fastapi import FastAPI, Request, Response, Depends
-from models import generate_text
+from fastapi.responses import StreamingResponse
+from models import stream_text
 from service import get_rag_content
 
 app = FastAPI()
@@ -26,8 +27,9 @@ async def monitor_service(
 
 
 @app.get("/generate/text")
-async def serve_language_model_controller(prompt: str, rag_content: str = Depends(get_rag_content)) -> str:
+async def serve_language_model_controller(
+    prompt: str, rag_content: str = Depends(get_rag_content)
+) -> StreamingResponse:
     prompt = "Answer this question: '" + prompt + "' based on this content: " + rag_content
     logger.info(prompt)
-    output = await generate_text(prompt)
-    return output
+    return StreamingResponse(stream_text(prompt), media_type="text/plain")

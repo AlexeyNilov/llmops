@@ -19,13 +19,19 @@ if prompt := st.chat_input("Write your prompt in this input field"):
         st.text(prompt)
 
     response = requests.get(
-        f"http://localhost:8000/generate/text", params={"prompt": prompt}
+        f"http://localhost:8000/generate/text", params={"prompt": prompt}, stream=True
     )
     response.raise_for_status()
-    assistant_response = response.text
+    assistant_response = ""
+
+    with st.chat_message("assistant"):
+        placeholder = st.empty()
+
+        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+            if chunk:
+                assistant_response += chunk
+                placeholder.markdown(assistant_response)
+
     st.session_state.messages.append(
         {"role": "assistant", "content": assistant_response}
     )
-
-    with st.chat_message("assistant"):
-        st.markdown(assistant_response)
