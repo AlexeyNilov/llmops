@@ -22,13 +22,14 @@ export QDRANT_URL=http://localhost:6333
 export QDRANT_COLLECTION_NAME=knowledgebase
 export LLAMAINDEX_EMBEDDINGS_BASE_URL=http://127.0.0.1:12346
 export LLAMAINDEX_EMBEDDING_PROVIDER=llamafile
+export LLAMAINDEX_EMBEDDING_MODEL=v5-small-retrieval-Q8_0.gguf
 export RAG_RETRIEVAL_TOP_K=2
 ```
 
-The default provider is `LlamafileEmbedding`, which works with a
-llama.cpp-style local embedding server. `LLAMAINDEX_EMBEDDING_PROVIDER=llama_cpp`
-is also recognized by the code, but that optional LlamaIndex integration is not
-available for every Python version.
+The default `llamafile` provider uses this app's LlamaIndex-compatible adapter
+for llama.cpp's OpenAI-style `/v1/embeddings` endpoint. Set
+`LLAMAINDEX_EMBEDDING_PROVIDER=native_llamafile` only when running a server that
+matches LlamaIndex's native `LlamafileEmbedding` `/embedding` response shape.
 
 Index a file:
 
@@ -43,5 +44,5 @@ delete and rebuild the whole collection.
 Run the FastAPI app:
 
 ```bash
-uvicorn app.main:app --reload
+PYTHONPATH=app uvicorn main:app --reload
 ```

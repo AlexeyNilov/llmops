@@ -1,4 +1,5 @@
 import os
+from uuid import NAMESPACE_URL, uuid5
 
 from loguru import logger
 from llama_index.core import VectorStoreIndex
@@ -42,7 +43,7 @@ class VectorService:
             nodes.append(
                 TextNode(
                     text=clean(chunk),
-                    id_=f"{source}:{chunk_index}",
+                    id_=str(uuid5(NAMESPACE_URL, f"{source}:{chunk_index}")),
                     metadata={
                         "source": source,
                         "chunk_index": chunk_index,

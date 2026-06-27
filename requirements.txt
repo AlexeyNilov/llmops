@@ -9,4 +9,3 @@ aiofiles
 qdrant-client
 llama-index
 llama-index-vector-stores-qdrant
-llama-index-embeddings-llamafile
