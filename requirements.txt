@@ -4,7 +4,6 @@ uvicorn
 streamlit
 loguru
 httpx
-aiofiles
 qdrant-client
 llama-index
 llama-index-vector-stores-qdrant

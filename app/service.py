@@ -1,11 +1,11 @@
 import os
+from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 from loguru import logger
 from llama_index.core import Document, VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
 
-from embeddings import read_text
 from index import (
     DEFAULT_COLLECTION_NAME,
     RETRIEVAL_TOP_K,
@@ -22,20 +22,13 @@ class VectorService:
         self,
         filepath: str,
         collection_name: str = DEFAULT_COLLECTION_NAME,
-        collection_size: int | None = None,
         append: bool = False,
         reset_collection: bool = False,
     ) -> None:
-        if collection_size is not None:
-            logger.warning(
-                f"Ignoring collection_size={collection_size}; "
-                "LlamaIndex/Qdrant infer vector size from the embedding model"
-            )
-
         logger.debug(f"Inserting {filepath} content into database")
         client = get_qdrant_client()
         source = os.path.basename(filepath)
-        text = await read_text(filepath)
+        text = Path(filepath).read_text(encoding="utf-8")
 
         if not text.strip():
             logger.warning(f"No content found in {filepath}; nothing inserted")
@@ -86,8 +79,6 @@ async def get_rag_content(prompt: str) -> str:
         similarity_top_k=RETRIEVAL_TOP_K
     )
     rag_content = retriever.retrieve(prompt)
-    rag_content_str = "\n".join(
-        node.node.get_content() for node in rag_content
-    )
+    rag_content_str = "\n".join(node.node.get_content() for node in rag_content)
 
     return rag_content_str
