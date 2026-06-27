@@ -20,13 +20,16 @@ FASTAPI_PORT ?= 8000
 STREAMLIT_HOST ?= 127.0.0.1
 STREAMLIT_PORT ?= 8501
 
-.PHONY: install test lint mypy format start-fastapi stop-fastapi restart-fastapi start-streamlit stop-streamlit restart-streamlit start-app stop-app restart-app
+.PHONY: install test test-integration lint mypy format start-fastapi stop-fastapi restart-fastapi start-streamlit stop-streamlit restart-streamlit start-app stop-app restart-app
 
 install:
 	$(PIP) install -e .[dev]
 
 test:
 	$(PYTEST)
+
+test-integration:
+	LLMOPS_RUN_INTEGRATION=1 $(PYTEST) -m integration
 
 lint:
 	$(RUFF) check .
