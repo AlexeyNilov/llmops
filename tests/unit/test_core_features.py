@@ -8,10 +8,11 @@ import pytest
 from llama_index.core.graph_stores.types import EntityNode, Relation
 
 from llmops.api import main
-from llmops.cli import cognitive_map, index_file
+from llmops.cli import cognitive_map, graph_context, index_file
 from llmops.infrastructure import embeddings, language_model, qdrant_store
 from llmops.use_cases import answer_question
 from llmops.use_cases import cognitive_map as cognitive_map_use_case
+from llmops.use_cases import graph_context as graph_context_use_case
 from llmops.use_cases import index_file as index_file_use_case
 
 
@@ -176,6 +177,60 @@ def test_render_mermaid_concept_map_uses_graph_relations() -> None:
     assert 'N0["IA"]' in rendered
     assert 'N1["Reasoning under constraints"]' in rendered
     assert 'N0 -- "IMPROVES" --> N1' in rendered
+
+
+def test_select_related_triples_ranks_graph_relations_by_lexical_overlap() -> None:
+    triples = [
+        ("IA", "is broader than", "findability"),
+        ("stronger service catalog", "captures", "owners"),
+        ("diagramming practices", "reduce", "cognitive load"),
+    ]
+
+    selected = graph_context_use_case.select_related_triples(
+        triples,
+        query="How does IA help with cognitive load and reasoning?",
+        context="Good IA should reduce cognitive load and externalize hidden structure.",
+        limit=2,
+    )
+
+    assert selected == [
+        ("diagramming practices", "reduce", "cognitive load"),
+        ("IA", "is broader than", "findability"),
+    ]
+
+
+def test_load_graph_triples_reads_persisted_property_graph_json(tmp_path) -> None:
+    graph_dir = tmp_path / "property_graph"
+    graph_dir.mkdir()
+    (graph_dir / "property_graph.json").write_text(
+        """
+        {
+          "triplets": [
+            ["IA", "is", "cognitive infrastructure"],
+            ["Good IA", "helps", "reasoning"]
+          ]
+        }
+        """,
+        encoding="utf-8",
+    )
+
+    triples = graph_context_use_case.load_graph_triples(graph_dir)
+
+    assert triples == [
+        ("IA", "is", "cognitive infrastructure"),
+        ("Good IA", "helps", "reasoning"),
+    ]
+
+
+def test_format_graph_triples_renders_context_lines() -> None:
+    rendered = graph_context_use_case.format_graph_triples(
+        [
+            ("IA", "is", "cognitive infrastructure"),
+            ("Good IA", "helps", "reasoning"),
+        ]
+    )
+
+    assert rendered == ("- IA -- is --> cognitive infrastructure\n- Good IA -- helps --> reasoning")
 
 
 def test_load_markdown_document_rejects_blank_notes(tmp_path) -> None:
@@ -401,6 +456,22 @@ def test_cognitive_map_cli_defaults_to_markdown_output(monkeypatch: pytest.Monke
 
     assert args.filepath == "input/note.md"
     assert args.output_path == "doc/cognitive_maps/note.md"
+
+
+def test_graph_context_cli_defaults_to_persisted_property_graph(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["graph_context.py", "How does IA support reasoning?"],
+    )
+
+    args = graph_context.parse_args()
+
+    assert args.query == "How does IA support reasoning?"
+    assert args.persist_dir == ".local/property_graph"
+    assert args.limit == 15
 
 
 def test_index_file_script_can_run_directly_without_pythonpath() -> None:

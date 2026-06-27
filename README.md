@@ -76,6 +76,17 @@ llama.cpp, `LLMOPS_GRAPH_DISABLE_THINKING=true` sends
 `chat_template_kwargs.enable_thinking=false` so structured triples are returned
 in `message.content` instead of the reasoning channel.
 
+Select triples from the persisted graph for a question:
+
+```bash
+PYTHONPATH=src python -m llmops.cli.graph_context "How does IA support reasoning?"
+```
+
+The graph-context CLI loads `property_graph.json` from `LLMOPS_GRAPH_PERSIST_DIR`
+and ranks triples by lexical overlap with the query. Use `--context` or
+`--context-file` to include retrieved text when experimenting with hybrid RAG
+and graph context.
+
 Run the FastAPI app:
 
 ```bash
