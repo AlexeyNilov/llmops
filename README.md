@@ -38,6 +38,12 @@ Index a file:
 PYTHONPATH=app python -m llmops_app.cli.index_file path/to/file.txt --collection-name knowledgebase
 ```
 
+Direct script execution is also supported:
+
+```bash
+python app/llmops_app/cli/index_file.py path/to/file.txt --collection-name knowledgebase
+```
+
 File processing uses LlamaIndex `Document` plus `SentenceSplitter` with the
 splitter's default chunking settings.
 

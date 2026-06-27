@@ -1,9 +1,0 @@
-fastapi[standard]
-openai
-uvicorn
-streamlit
-loguru
-httpx
-qdrant-client
-llama-index
-llama-index-vector-stores-qdrant

@@ -1,4 +1,6 @@
+import subprocess
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -245,3 +247,17 @@ def test_embed_file_cli_rejects_append_and_reset_collection_together(
         index_file.parse_args()
 
     assert exc_info.value.code == 2
+
+
+def test_index_file_script_can_run_directly_without_pythonpath() -> None:
+    script_path = Path("app/llmops_app/cli/index_file.py")
+
+    result = subprocess.run(
+        [sys.executable, str(script_path), "--help"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert "Index a text file with LlamaIndex embeddings and Qdrant." in result.stdout
