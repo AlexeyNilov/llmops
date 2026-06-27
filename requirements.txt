@@ -3,7 +3,6 @@ openai
 uvicorn
 streamlit
 loguru
-beautifulsoup4
 httpx
 aiofiles
 qdrant-client

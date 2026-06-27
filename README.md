@@ -1,9 +1,10 @@
 # LLMOPS
 
-## Local RAG indexing
+## Local RAG chat
 
 The app uses LlamaIndex for embeddings and retrieval, with Qdrant as the vector
-store.
+store. The main UI is a Streamlit chat client that calls the local FastAPI
+server.
 
 Install dependencies:
 
@@ -49,3 +50,12 @@ Run the FastAPI app:
 ```bash
 PYTHONPATH=app uvicorn main:app --reload
 ```
+
+In another terminal, run the chat UI:
+
+```bash
+streamlit run app/chat.py
+```
+
+The Streamlit client sends prompts to `http://localhost:8000/generate/text` and
+streams the response back into the chat.
