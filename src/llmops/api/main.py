@@ -7,7 +7,11 @@ from fastapi.responses import StreamingResponse
 from loguru import logger
 
 from llmops.infrastructure.language_model import stream_text
-from llmops.use_cases.answer_question import build_answer_prompt, get_rag_content
+from llmops.use_cases.answer_question import (
+    AnswerContext,
+    build_answer_prompt,
+    get_answer_context,
+)
 
 app = FastAPI()
 
@@ -28,14 +32,16 @@ async def monitor_service(
 
 @app.get("/generate/text")
 async def serve_language_model_controller(
-    prompt: str, rag_content: str = Depends(get_rag_content)
+    prompt: str,
+    answer_context: AnswerContext = Depends(get_answer_context),
 ) -> StreamingResponse:
-    answer_prompt = build_answer_prompt(prompt, rag_content)
+    answer_prompt = build_answer_prompt(prompt, answer_context)
     logger.info(
         {
             "event": "generate_text",
             "prompt_length": len(prompt),
-            "rag_content_length": len(rag_content),
+            "rag_content_length": len(answer_context.rag_content),
+            "graph_content_length": len(answer_context.graph_content),
         }
     )
     return StreamingResponse(stream_text(answer_prompt), media_type="text/plain")

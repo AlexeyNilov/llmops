@@ -233,6 +233,83 @@ def test_format_graph_triples_renders_context_lines() -> None:
     assert rendered == ("- IA -- is --> cognitive infrastructure\n- Good IA -- helps --> reasoning")
 
 
+def test_get_graph_content_returns_related_triples_from_persisted_graph(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    graph_dir = tmp_path / "property_graph"
+    graph_dir.mkdir()
+    (graph_dir / "property_graph.json").write_text(
+        """
+        {
+          "triplets": [
+            ["IA", "supports", "reasoning"],
+            ["Service catalog", "captures", "owners"]
+          ]
+        }
+        """,
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(answer_question, "GRAPH_PERSIST_DIR", str(graph_dir))
+    monkeypatch.setattr(answer_question, "GRAPH_CONTEXT_ENABLED", True)
+    monkeypatch.setattr(answer_question, "GRAPH_CONTEXT_TOP_K", 5)
+
+    graph_content = answer_question.get_graph_content(
+        "How does IA support reasoning?",
+        "Good IA helps people reason together.",
+    )
+
+    assert graph_content == "- IA -- supports --> reasoning"
+
+
+def test_get_graph_content_returns_empty_string_when_graph_file_is_missing(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(answer_question, "GRAPH_PERSIST_DIR", str(tmp_path / "missing"))
+    monkeypatch.setattr(answer_question, "GRAPH_CONTEXT_ENABLED", True)
+
+    graph_content = answer_question.get_graph_content(
+        "How does IA support reasoning?",
+        "Good IA helps people reason together.",
+    )
+
+    assert graph_content == ""
+
+
+def test_build_answer_prompt_distinguishes_source_excerpts_from_graph_relations() -> None:
+    context = answer_question.AnswerContext(
+        rag_content="Good IA helps people reason together under constraints.",
+        graph_content="- IA -- supports --> reasoning",
+    )
+
+    prompt = answer_question.build_answer_prompt(
+        "How does IA support reasoning?",
+        context,
+    )
+
+    assert "Source excerpts:" in prompt
+    assert "Concept relations:" in prompt
+    assert "Do not treat concept relations as standalone proof" in prompt
+    assert "Good IA helps people reason together under constraints." in prompt
+    assert "- IA -- supports --> reasoning" in prompt
+
+
+def test_build_answer_prompt_omits_graph_section_when_no_graph_context_exists() -> None:
+    context = answer_question.AnswerContext(
+        rag_content="Good IA helps people reason together under constraints.",
+        graph_content="",
+    )
+
+    prompt = answer_question.build_answer_prompt(
+        "How does IA support reasoning?",
+        context,
+    )
+
+    assert "Source excerpts:" in prompt
+    assert "Concept relations:" not in prompt
+
+
 def test_load_markdown_document_rejects_blank_notes(tmp_path) -> None:
     filepath = tmp_path / "blank.md"
     filepath.write_text("\n\t", encoding="utf-8")
@@ -369,6 +446,34 @@ async def test_get_rag_content_awaits_async_retrieval_and_joins_node_text(
 
 
 @pytest.mark.asyncio
+async def test_get_answer_context_combines_async_rag_with_graph_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def fake_get_rag_content(prompt: str) -> str:
+        assert prompt == "How does IA support reasoning?"
+        return "retrieved IA source"
+
+    def fake_get_graph_content(prompt: str, rag_content: str) -> str:
+        assert prompt == "How does IA support reasoning?"
+        assert rag_content == "retrieved IA source"
+        return "- IA -- supports --> reasoning"
+
+    async def fake_to_thread(func: Any, *args: Any) -> str:
+        return func(*args)
+
+    monkeypatch.setattr(answer_question, "get_rag_content", fake_get_rag_content)
+    monkeypatch.setattr(answer_question, "get_graph_content", fake_get_graph_content)
+    monkeypatch.setattr(answer_question.asyncio, "to_thread", fake_to_thread)
+
+    context = await answer_question.get_answer_context("How does IA support reasoning?")
+
+    assert context == answer_question.AnswerContext(
+        rag_content="retrieved IA source",
+        graph_content="- IA -- supports --> reasoning",
+    )
+
+
+@pytest.mark.asyncio
 async def test_stream_text_sends_chat_prompt_and_yields_only_non_empty_chunks(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -401,7 +506,7 @@ async def test_stream_text_sends_chat_prompt_and_yields_only_non_empty_chunks(
 
 
 @pytest.mark.asyncio
-async def test_generate_text_controller_combines_prompt_with_rag_content_and_streams_response(
+async def test_generate_text_controller_combines_prompt_with_answer_context_and_streams_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured_prompts: list[str] = []
@@ -417,17 +522,21 @@ async def test_generate_text_controller_combines_prompt_with_rag_content_and_str
 
     response = await main.serve_language_model_controller(
         prompt="What is stored?",
-        rag_content="retrieved content",
+        answer_context=answer_question.AnswerContext(
+            rag_content="retrieved content",
+            graph_content="- stored item -- is in --> retrieved content",
+        ),
     )
     chunks = [chunk async for chunk in response.body_iterator]
 
     assert chunks == ["answer", " text"]
     assert response.media_type == "text/plain"
-    assert captured_prompts == [
-        "Answer this question: 'What is stored?' based on this content: retrieved content"
-    ]
+    assert len(captured_prompts) == 1
+    assert "Source excerpts:\nretrieved content" in captured_prompts[0]
+    assert "Concept relations:\n- stored item -- is in --> retrieved content" in captured_prompts[0]
+    assert "Do not treat concept relations as standalone proof" in captured_prompts[0]
     assert "retrieved content" not in str(log_messages)
-    assert "Answer this question" not in str(log_messages)
+    assert "- stored item" not in str(log_messages)
 
 
 def test_embed_file_cli_rejects_append_and_reset_collection_together(

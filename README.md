@@ -25,6 +25,8 @@ export LLAMAINDEX_EMBEDDINGS_BASE_URL=http://127.0.0.1:12346
 export LLAMAINDEX_EMBEDDING_PROVIDER=llamafile
 export LLAMAINDEX_EMBEDDING_MODEL=v5-small-retrieval-Q8_0.gguf
 export RAG_RETRIEVAL_TOP_K=2
+export LLMOPS_GRAPH_CONTEXT_ENABLED=true
+export LLMOPS_GRAPH_CONTEXT_TOP_K=15
 export LLMOPS_GRAPH_LLM_MODEL=gemma-4-12b
 export LLMOPS_GRAPH_PERSIST_DIR=.local/property_graph
 export LLMOPS_GRAPH_CHUNK_SIZE=1200
@@ -102,9 +104,12 @@ streamlit run src/llmops/ui/streamlit_chat.py
 The Streamlit client sends prompts to `http://localhost:8000/generate/text` and
 streams the response back into the chat.
 
-The FastAPI request path uses async retrieval against Qdrant and async
-chat-completion streaming. The CLI indexing path keeps separate sync Qdrant
-helpers for collection maintenance and batch indexing.
+The FastAPI request path uses async retrieval against Qdrant, then optionally
+loads related triples from the persisted property graph before starting
+chat-completion streaming. Source excerpts are the grounding evidence; graph
+triples are prompt context for organizing relationships and distinctions. The
+CLI indexing path keeps separate sync Qdrant helpers for collection maintenance
+and batch indexing.
 
 ## App structure
 
