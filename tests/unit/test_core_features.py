@@ -96,6 +96,27 @@ def test_parse_llm_triplets_accepts_markdown_wrapped_triplets() -> None:
     ]
 
 
+def test_graph_transformations_split_markdown_sections_into_small_chunks() -> None:
+    transformations = cognitive_map_use_case.build_graph_transformations(
+        chunk_size=80,
+        chunk_overlap=10,
+    )
+
+    assert len(transformations) == 2
+    assert transformations[0].__class__.__name__ == "MarkdownNodeParser"
+    assert transformations[1].__class__.__name__ == "SentenceSplitter"
+    assert transformations[1].chunk_size == 80
+    assert transformations[1].chunk_overlap == 10
+
+
+def test_graph_transformations_reject_overlap_that_is_not_smaller_than_chunk() -> None:
+    with pytest.raises(ValueError, match="chunk_overlap must be smaller"):
+        cognitive_map_use_case.build_graph_transformations(
+            chunk_size=80,
+            chunk_overlap=80,
+        )
+
+
 def test_render_mermaid_concept_map_uses_graph_relations() -> None:
     graph = cognitive_map_use_case.SimplePropertyGraphStore()
     ia = EntityNode(name="IA", label="concept")

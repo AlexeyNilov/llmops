@@ -7,11 +7,13 @@ from llama_index.core import Document
 from llama_index.core.graph_stores.simple_labelled import SimplePropertyGraphStore
 from llama_index.core.indices.property_graph import PropertyGraphIndex, SimpleLLMPathExtractor
 from llama_index.core.llms import CompletionResponse, CustomLLM, LLMMetadata
-from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.node_parser import MarkdownNodeParser, SentenceSplitter
+from llama_index.core.schema import TransformComponent
 from loguru import logger
 from openai import OpenAI
 
 from llmops.config import (
+    GRAPH_CHUNK_OVERLAP,
     GRAPH_CHUNK_SIZE,
     GRAPH_LLM_MODEL,
     GRAPH_MAX_PATHS_PER_CHUNK,
@@ -21,17 +23,10 @@ from llmops.config import (
 )
 
 TRIPLET_PATTERN = re.compile(r"\(([^,\n]+),\s*([^,\n]+),\s*([^)]+)\)")
-TRIPLET_EXTRACT_PROMPT = """
-Extract up to {max_knowledge_triplets} concept-map triples from the text.
-Return only triples, one per line, in this exact format:
-(subject, relation, object)
-
-Prefer stable concepts over sentence fragments.
-Use short relation labels such as is, supports, reduces, exposes, depends on, improves.
-
-Text:
-{text}
-"""
+TRIPLET_EXTRACT_PROMPT = (
+    "Extract concept triples from this text. Return only lines like "
+    "(subject, relation, object).\n\nText:\n{text}"
+)
 
 
 class LMStudioLLM(CustomLLM):
@@ -105,6 +100,8 @@ def build_cognitive_graph(
     filepath: Path,
     persist_dir: Path = Path(GRAPH_PERSIST_DIR),
     max_paths_per_chunk: int = GRAPH_MAX_PATHS_PER_CHUNK,
+    chunk_size: int = GRAPH_CHUNK_SIZE,
+    chunk_overlap: int = GRAPH_CHUNK_OVERLAP,
 ) -> SimplePropertyGraphStore:
     document = load_markdown_document(filepath)
     graph_store = SimplePropertyGraphStore()
@@ -122,7 +119,10 @@ def build_cognitive_graph(
         llm=llm,
         kg_extractors=[extractor],
         property_graph_store=graph_store,
-        transformations=[SentenceSplitter(chunk_size=GRAPH_CHUNK_SIZE)],
+        transformations=build_graph_transformations(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        ),
         embed_kg_nodes=False,
         use_async=False,
         show_progress=True,
@@ -162,6 +162,18 @@ def write_cognitive_map(
         encoding="utf-8",
     )
     return output_path
+
+
+def build_graph_transformations(
+    chunk_size: int = GRAPH_CHUNK_SIZE,
+    chunk_overlap: int = GRAPH_CHUNK_OVERLAP,
+) -> list[TransformComponent]:
+    if chunk_overlap >= chunk_size:
+        raise ValueError("chunk_overlap must be smaller than chunk_size")
+    return [
+        MarkdownNodeParser.from_defaults(),
+        SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap),
+    ]
 
 
 def _get_graph_llm() -> LMStudioLLM:
