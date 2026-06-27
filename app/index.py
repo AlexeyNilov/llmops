@@ -40,12 +40,13 @@ class LlamaCppServerEmbedding(BaseEmbedding):
         callback_manager: CallbackManager | None = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__(
-            base_url=base_url.rstrip("/"),
-            model=model,
-            callback_manager=callback_manager or CallbackManager([]),
-            **kwargs,
-        )
+        init_kwargs: dict[str, Any] = {
+            "base_url": base_url.rstrip("/"),
+            "model": model,
+            "callback_manager": callback_manager or CallbackManager([]),
+        }
+        init_kwargs.update(kwargs)
+        super().__init__(**init_kwargs)
 
     @classmethod
     def class_name(cls) -> str:
@@ -138,9 +139,7 @@ def get_vector_store(collection_name: str, client: QdrantClient | None = None):
 def get_storage_context(collection_name: str, client: QdrantClient | None = None):
     from llama_index.core import StorageContext
 
-    return StorageContext.from_defaults(
-        vector_store=get_vector_store(collection_name, client)
-    )
+    return StorageContext.from_defaults(vector_store=get_vector_store(collection_name, client))
 
 
 def get_index(collection_name: str = DEFAULT_COLLECTION_NAME):
@@ -157,9 +156,7 @@ def collection_exists(client: QdrantClient, collection_name: str) -> bool:
         return client.collection_exists(collection_name)
     except AttributeError:
         response = client.get_collections()
-        return any(
-            collection.name == collection_name for collection in response.collections
-        )
+        return any(collection.name == collection_name for collection in response.collections)
 
 
 def reset_collection(client: QdrantClient, collection_name: str) -> None:

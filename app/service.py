@@ -2,10 +2,6 @@ import os
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
-from loguru import logger
-from llama_index.core import Document, VectorStoreIndex
-from llama_index.core.node_parser import SentenceSplitter
-
 from index import (
     DEFAULT_COLLECTION_NAME,
     RETRIEVAL_TOP_K,
@@ -13,8 +9,13 @@ from index import (
     get_embed_model,
     get_qdrant_client,
     get_storage_context,
+)
+from index import (
     reset_collection as reset_qdrant_collection,
 )
+from llama_index.core import Document, VectorStoreIndex
+from llama_index.core.node_parser import SentenceSplitter
+from loguru import logger
 
 
 class VectorService:
@@ -75,9 +76,7 @@ vector_service = VectorService()
 async def get_rag_content(prompt: str) -> str:
     from index import get_index
 
-    retriever = get_index(DEFAULT_COLLECTION_NAME).as_retriever(
-        similarity_top_k=RETRIEVAL_TOP_K
-    )
+    retriever = get_index(DEFAULT_COLLECTION_NAME).as_retriever(similarity_top_k=RETRIEVAL_TOP_K)
     rag_content = retriever.retrieve(prompt)
     rag_content_str = "\n".join(node.node.get_content() for node in rag_content)
 

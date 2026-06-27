@@ -22,7 +22,7 @@ lint:
 	$(RUFF) check .
 
 mypy:
-	$(MYPY) src tests
+	$(MYPY) app
 
 format:
 	$(RUFF) check --fix .

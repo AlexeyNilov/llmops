@@ -1,11 +1,12 @@
 # main.py
 
-from loguru import logger
 import time
+from collections.abc import Awaitable, Callable
 from uuid import uuid4
-from typing import Awaitable, Callable
-from fastapi import FastAPI, Request, Response, Depends
+
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import StreamingResponse
+from loguru import logger
 from models import stream_text
 from service import get_rag_content
 
@@ -30,8 +31,6 @@ async def monitor_service(
 async def serve_language_model_controller(
     prompt: str, rag_content: str = Depends(get_rag_content)
 ) -> StreamingResponse:
-    prompt = (
-        "Answer this question: '" + prompt + "' based on this content: " + rag_content
-    )
+    prompt = "Answer this question: '" + prompt + "' based on this content: " + rag_content
     logger.info(prompt)
     return StreamingResponse(stream_text(prompt), media_type="text/plain")

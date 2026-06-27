@@ -32,6 +32,4 @@ if prompt := st.chat_input("Write your prompt in this input field"):
                 assistant_response += chunk
                 placeholder.markdown(assistant_response)
 
-    st.session_state.messages.append(
-        {"role": "assistant", "content": assistant_response}
-    )
+    st.session_state.messages.append({"role": "assistant", "content": assistant_response})
