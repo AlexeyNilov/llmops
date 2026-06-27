@@ -5,11 +5,12 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from llmops_app.api import main
-from llmops_app.cli import index_file
-from llmops_app.infrastructure import embeddings, language_model, qdrant_store
-from llmops_app.use_cases import answer_question
-from llmops_app.use_cases import index_file as index_file_use_case
+
+from llmops.api import main
+from llmops.cli import index_file
+from llmops.infrastructure import embeddings, language_model, qdrant_store
+from llmops.use_cases import answer_question
+from llmops.use_cases import index_file as index_file_use_case
 
 
 def test_embedding_adapter_orders_embeddings_by_response_index() -> None:
@@ -250,7 +251,7 @@ def test_embed_file_cli_rejects_append_and_reset_collection_together(
 
 
 def test_index_file_script_can_run_directly_without_pythonpath() -> None:
-    script_path = Path("app/llmops_app/cli/index_file.py")
+    script_path = Path("src/llmops/cli/index_file.py")
 
     result = subprocess.run(
         [sys.executable, str(script_path), "--help"],

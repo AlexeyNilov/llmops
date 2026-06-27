@@ -6,8 +6,8 @@ from pathlib import Path
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from llmops_app.config import DEFAULT_COLLECTION_NAME
-from llmops_app.use_cases.index_file import file_indexer
+from llmops.config import DEFAULT_COLLECTION_NAME
+from llmops.use_cases.index_file import file_indexer
 
 
 async def index_file(

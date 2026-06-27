@@ -6,14 +6,14 @@ from llama_index.core import Document, VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
 from loguru import logger
 
-from llmops_app.config import DEFAULT_COLLECTION_NAME
-from llmops_app.infrastructure.embeddings import get_embed_model
-from llmops_app.infrastructure.qdrant_store import (
+from llmops.config import DEFAULT_COLLECTION_NAME
+from llmops.infrastructure.embeddings import get_embed_model
+from llmops.infrastructure.qdrant_store import (
     delete_source_documents,
     get_qdrant_client,
     get_storage_context,
 )
-from llmops_app.infrastructure.qdrant_store import (
+from llmops.infrastructure.qdrant_store import (
     reset_collection as reset_qdrant_collection,
 )
 

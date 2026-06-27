@@ -6,8 +6,8 @@ from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import StreamingResponse
 from loguru import logger
 
-from llmops_app.infrastructure.language_model import stream_text
-from llmops_app.use_cases.answer_question import build_answer_prompt, get_rag_content
+from llmops.infrastructure.language_model import stream_text
+from llmops.use_cases.answer_question import build_answer_prompt, get_rag_content
 
 app = FastAPI()
 

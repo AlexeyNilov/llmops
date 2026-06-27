@@ -1,5 +1,5 @@
-from llmops_app.config import DEFAULT_COLLECTION_NAME, RETRIEVAL_TOP_K
-from llmops_app.infrastructure.qdrant_store import get_index
+from llmops.config import DEFAULT_COLLECTION_NAME, RETRIEVAL_TOP_K
+from llmops.infrastructure.qdrant_store import get_index
 
 
 def build_answer_prompt(question: str, rag_content: str) -> str:

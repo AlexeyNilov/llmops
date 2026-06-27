@@ -5,7 +5,7 @@ from llama_index.core.base.embeddings.base import BaseEmbedding, Embedding
 from llama_index.core.bridge.pydantic import Field
 from llama_index.core.callbacks.base import CallbackManager
 
-from llmops_app.config import EMBEDDING_MODEL, EMBEDDING_PROVIDER, EMBEDDINGS_BASE_URL
+from llmops.config import EMBEDDING_MODEL, EMBEDDING_PROVIDER, EMBEDDINGS_BASE_URL
 
 
 class LlamaCppServerEmbedding(BaseEmbedding):

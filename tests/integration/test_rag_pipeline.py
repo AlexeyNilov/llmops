@@ -1,9 +1,10 @@
 import os
 
 import pytest
-from llmops_app.config import DEFAULT_COLLECTION_NAME
-from llmops_app.use_cases.answer_question import get_rag_content
-from llmops_app.use_cases.index_file import FileIndexer
+
+from llmops.config import DEFAULT_COLLECTION_NAME
+from llmops.use_cases.answer_question import get_rag_content
+from llmops.use_cases.index_file import FileIndexer
 
 pytestmark = pytest.mark.integration
 

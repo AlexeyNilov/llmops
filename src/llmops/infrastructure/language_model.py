@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 
-from llmops_app.config import CHAT_MODEL
-from llmops_app.infrastructure.chat_client import chat_client
+from llmops.config import CHAT_MODEL
+from llmops.infrastructure.chat_client import chat_client
 
 
 async def stream_text(prompt: str) -> AsyncIterator[str]:

@@ -3,8 +3,8 @@ from typing import Any
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qdrant_models
 
-from llmops_app.config import DEFAULT_COLLECTION_NAME, QDRANT_URL
-from llmops_app.infrastructure.embeddings import get_embed_model
+from llmops.config import DEFAULT_COLLECTION_NAME, QDRANT_URL
+from llmops.infrastructure.embeddings import get_embed_model
 
 
 def get_qdrant_client() -> QdrantClient:

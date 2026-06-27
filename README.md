@@ -35,13 +35,13 @@ matches LlamaIndex's native `LlamafileEmbedding` `/embedding` response shape.
 Index a file:
 
 ```bash
-PYTHONPATH=app python -m llmops_app.cli.index_file path/to/file.txt --collection-name knowledgebase
+PYTHONPATH=src python -m llmops.cli.index_file path/to/file.txt --collection-name knowledgebase
 ```
 
 Direct script execution is also supported:
 
 ```bash
-python app/llmops_app/cli/index_file.py path/to/file.txt --collection-name knowledgebase
+python src/llmops/cli/index_file.py path/to/file.txt --collection-name knowledgebase
 ```
 
 File processing uses LlamaIndex `Document` plus `SentenceSplitter` with the
@@ -54,13 +54,13 @@ delete and rebuild the whole collection.
 Run the FastAPI app:
 
 ```bash
-PYTHONPATH=app uvicorn llmops_app.api.main:app --reload
+PYTHONPATH=src uvicorn llmops.api.main:app --reload
 ```
 
 In another terminal, run the chat UI:
 
 ```bash
-streamlit run app/llmops_app/ui/streamlit_chat.py
+streamlit run src/llmops/ui/streamlit_chat.py
 ```
 
 The Streamlit client sends prompts to `http://localhost:8000/generate/text` and
@@ -70,9 +70,9 @@ streams the response back into the chat.
 
 The application code is organized by responsibility:
 
-- `llmops_app/api`: FastAPI routing and HTTP middleware.
-- `llmops_app/cli`: command-line entry points.
-- `llmops_app/ui`: Streamlit UI entry points.
-- `llmops_app/use_cases`: application workflows such as file indexing and RAG retrieval.
-- `llmops_app/infrastructure`: adapters for Qdrant, embeddings, and chat-completion clients.
-- `llmops_app/config.py`: environment-backed runtime settings.
+- `src/llmops/api`: FastAPI routing and HTTP middleware.
+- `src/llmops/cli`: command-line entry points.
+- `src/llmops/ui`: Streamlit UI entry points.
+- `src/llmops/use_cases`: application workflows such as file indexing and RAG retrieval.
+- `src/llmops/infrastructure`: adapters for Qdrant, embeddings, and chat-completion clients.
+- `src/llmops/config.py`: environment-backed runtime settings.
