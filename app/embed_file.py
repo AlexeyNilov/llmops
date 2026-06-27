@@ -28,7 +28,7 @@ async def embed_file(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Embed a text file using the local LM Studio embeddings endpoint."
+        description="Index a text file with LlamaIndex embeddings and Qdrant."
     )
     parser.add_argument("filepath")
     parser.add_argument("--chunk-size", type=int, default=256)
@@ -37,7 +37,10 @@ def parse_args() -> argparse.Namespace:
         "--collection-size",
         type=int,
         default=None,
-        help="Qdrant vector size. Defaults to the embedding model output size.",
+        help=(
+            "Deprecated. LlamaIndex/Qdrant infer vector size from the "
+            "embedding model."
+        ),
     )
     parser.add_argument(
         "--append",

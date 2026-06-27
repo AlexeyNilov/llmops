@@ -1,53 +1,70 @@
-# rag/service.py
-
 import os
 
 from loguru import logger
-from repository import VectorRepository
-from embeddings import clean, embed, load
+from llama_index.core import VectorStoreIndex
+from llama_index.core.schema import TextNode
+
+from embeddings import clean, load
+from index import (
+    DEFAULT_COLLECTION_NAME,
+    RETRIEVAL_TOP_K,
+    delete_by_source,
+    get_embed_model,
+    get_qdrant_client,
+    get_storage_context,
+    reset_collection as reset_qdrant_collection,
+)
 
 
-class VectorService(VectorRepository):
-    def __init__(self):
-        super().__init__()
-
+class VectorService:
     async def store_file_content_in_db(
         self,
         filepath: str,
         chunk_size: int = 512,
-        collection_name: str = "knowledgebase",
+        collection_name: str = DEFAULT_COLLECTION_NAME,
         collection_size: int | None = None,
         append: bool = False,
         reset_collection: bool = False,
     ) -> None:
+        if collection_size is not None:
+            logger.warning(
+                f"Ignoring collection_size={collection_size}; "
+                "LlamaIndex/Qdrant infer vector size from the embedding model"
+            )
+
         logger.debug(f"Inserting {filepath} content into database")
-        collection_created = False
+        client = get_qdrant_client()
         source = os.path.basename(filepath)
+        nodes: list[TextNode] = []
 
         async for chunk_index, chunk in async_enumerate(load(filepath, chunk_size)):
             logger.debug(f"Inserting '{chunk[0:20]}...' into database")
-
-            embedding_vector = await embed(clean(chunk))
-            if not collection_created:
-                vector_size = collection_size or len(embedding_vector)
-                if reset_collection:
-                    await self.recreate_collection(collection_name, vector_size)
-                else:
-                    await self.create_collection(collection_name, vector_size)
-                    if not append:
-                        await self.delete_by_source(collection_name, source)
-                collection_created = True
-
-            await self.create(
-                collection_name,
-                embedding_vector,
-                chunk,
-                source,
-                chunk_index,
+            nodes.append(
+                TextNode(
+                    text=clean(chunk),
+                    id_=f"{source}:{chunk_index}",
+                    metadata={
+                        "source": source,
+                        "chunk_index": chunk_index,
+                        "original_text": chunk,
+                    },
+                )
             )
 
-        if not collection_created:
+        if not nodes:
             logger.warning(f"No content found in {filepath}; nothing inserted")
+            return
+
+        if reset_collection:
+            reset_qdrant_collection(client, collection_name)
+        elif not append:
+            delete_by_source(client, collection_name, source)
+
+        VectorStoreIndex(
+            nodes,
+            storage_context=get_storage_context(collection_name, client),
+            embed_model=get_embed_model(),
+        )
 
 
 vector_service = VectorService()
@@ -61,9 +78,14 @@ async def async_enumerate(async_iterable, start: int = 0):
 
 
 async def get_rag_content(prompt: str) -> str:
-    rag_content = await vector_service.search(
-        "knowledgebase", await embed(prompt), 2, 0.4
+    from index import get_index
+
+    retriever = get_index(DEFAULT_COLLECTION_NAME).as_retriever(
+        similarity_top_k=RETRIEVAL_TOP_K
     )
-    rag_content_str = "\n".join([c.payload["original_text"] for c in rag_content])
+    rag_content = retriever.retrieve(prompt)
+    rag_content_str = "\n".join(
+        node.node.get_content() for node in rag_content
+    )
 
     return rag_content_str
