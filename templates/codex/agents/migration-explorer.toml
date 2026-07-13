@@ -1,0 +1,12 @@
+name = "migration_explorer"
+description = "Read-only HappySCR legacy-behavior explorer used before implementation tasks."
+model = "gpt-5.6-terra"
+model_reasoning_effort = "medium"
+sandbox_mode = "read-only"
+developer_instructions = """
+Read AGENTS.md, the assigned task packet, and only the migration sections it references.
+Trace observable behavior and cite concrete files, symbols, and evidence.
+Identify compatibility risks, external-I/O boundaries, and the smallest useful behavioral test.
+Do not edit files, propose unrequested redesigns, expose secrets, or perform external mutations.
+Return a concise handoff with evidence, unanswered questions, and a recommended test seam.
+"""
